@@ -1,5 +1,5 @@
 export const en = {
-  appName: "ExamHub",
+  appName: "Exam",
   common: {
     save: "Save",
     cancel: "Cancel",
@@ -8,7 +8,8 @@ export const en = {
     create: "Create",
     back: "Back",
     loading: "Please wait...",
-    confirmDelete: "Are you sure you want to delete this? This cannot be undone.",
+    confirmDelete:
+      "Are you sure you want to delete this? This cannot be undone.",
     actions: "Actions",
     date: "Date",
     name: "Name",
@@ -53,7 +54,8 @@ export const en = {
   },
   exam: {
     rules: "Before you start",
-    ruleTime: "You have {n} minutes. The timer starts as soon as you press the button.",
+    ruleTime:
+      "You have {n} minutes. The timer starts as soon as you press the button.",
     ruleSingle: "Every question has exactly one correct answer.",
     ruleLeave: "The timer keeps running even if you close the page.",
     rulePass: "You need at least {n}% to pass.",

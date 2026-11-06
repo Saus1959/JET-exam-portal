@@ -1,4 +1,5 @@
 import type { Types } from "mongoose";
+import { connection } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { isObjectId } from "@/lib/utils";
 import { Attempt, type IAttempt } from "@/models/Attempt";
@@ -28,18 +29,27 @@ function toAttemptDTO(d: LeanAttempt): AttemptDTO {
 
 export async function getAttempt(id: string): Promise<AttemptDTO | null> {
   if (!isObjectId(id)) return null;
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
   const doc = await Attempt.findById(id).lean<LeanAttempt | null>();
   return doc ? toAttemptDTO(doc) : null;
 }
 
-export async function listAttemptsForUser(userId: string): Promise<AttemptDTO[]> {
+export async function listAttemptsForUser(
+  userId: string,
+): Promise<AttemptDTO[]> {
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
-  const docs = await Attempt.find({ user: userId }).sort({ startedAt: -1 }).lean<LeanAttempt[]>();
+  const docs = await Attempt.find({ user: userId })
+    .sort({ startedAt: -1 })
+    .lean<LeanAttempt[]>();
   return docs.map(toAttemptDTO);
 }
 
-export async function listRecentAttempts(limit: number): Promise<AttemptWithUser[]> {
+export async function listRecentAttempts(
+  limit: number,
+): Promise<AttemptWithUser[]> {
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
   const docs = await Attempt.find({ status: "finished" })
     .sort({ finishedAt: -1 })
@@ -50,21 +60,34 @@ export async function listRecentAttempts(limit: number): Promise<AttemptWithUser
   const users = await User.find({ _id: { $in: ids } }).lean();
   const names = new Map(users.map((u) => [String(u._id), u.name]));
 
-  return docs.map((d) => ({ ...toAttemptDTO(d), userName: names.get(String(d.user)) ?? "—" }));
+  return docs.map((d) => ({
+    ...toAttemptDTO(d),
+    userName: names.get(String(d.user)) ?? "—",
+  }));
 }
 
 /** Grades the answers and closes the attempt. Safe to call twice: only the first call wins. */
-export async function finalizeAttempt(attemptId: string, answers: unknown[]): Promise<void> {
+export async function finalizeAttempt(
+  attemptId: string,
+  answers: unknown[],
+): Promise<void> {
   await connectDB();
   const attempt = await Attempt.findById(attemptId).lean<LeanAttempt | null>();
   if (!attempt || attempt.status === "finished") return;
 
-  const exam = await Exam.findById(attempt.exam).lean<(IExam & { _id: Types.ObjectId }) | null>();
+  const exam = await Exam.findById(attempt.exam).lean<
+    (IExam & { _id: Types.ObjectId }) | null
+  >();
   const questions = exam?.questions ?? [];
 
   const clean = questions.map((q, i) => {
     const a = answers[i];
-    return typeof a === "number" && Number.isInteger(a) && a >= 0 && a < q.options.length ? a : -1;
+    return typeof a === "number" &&
+      Number.isInteger(a) &&
+      a >= 0 &&
+      a < q.options.length
+      ? a
+      : -1;
   });
   const score = clean.filter((a, i) => a === questions[i].correctIndex).length;
   const total = questions.length;
@@ -73,6 +96,16 @@ export async function finalizeAttempt(attemptId: string, answers: unknown[]): Pr
 
   await Attempt.updateOne(
     { _id: attempt._id, status: "in_progress" },
-    { $set: { answers: clean, score, total, percent, passed, status: "finished", finishedAt: new Date() } },
+    {
+      $set: {
+        answers: clean,
+        score,
+        total,
+        percent,
+        passed,
+        status: "finished",
+        finishedAt: new Date(),
+      },
+    },
   );
 }

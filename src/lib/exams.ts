@@ -1,4 +1,5 @@
 import type { Types } from "mongoose";
+import { connection } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { isObjectId } from "@/lib/utils";
 import { Exam, type IExam } from "@/models/Exam";
@@ -23,6 +24,7 @@ function toExamDTO(d: LeanExam): ExamDTO {
 }
 
 export async function listExams(onlyPublished: boolean): Promise<ExamDTO[]> {
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
   const docs = await Exam.find(onlyPublished ? { published: true } : {})
     .sort({ createdAt: -1 })
@@ -32,6 +34,7 @@ export async function listExams(onlyPublished: boolean): Promise<ExamDTO[]> {
 
 export async function getExam(id: string): Promise<ExamDTO | null> {
   if (!isObjectId(id)) return null;
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
   const doc = await Exam.findById(id).lean<LeanExam | null>();
   return doc ? toExamDTO(doc) : null;

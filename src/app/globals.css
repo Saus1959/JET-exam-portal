@@ -9,6 +9,12 @@
   --color-brand-soft: #eaf1ff; /* light blue tint */
   --color-navy: #0b1b3f; /* text & headings */
   --color-page: #f4f8ff; /* page background */
+
+  /* login page palette (taken from jetacademy.az form) */
+  --color-jet: #1962be; /* buttons, borders, icons */
+  --color-jet-dark: #144f9c; /* button hover */
+  --color-cream: #fef6e7; /* input fill */
+  --color-sky: #dce8f8; /* background glow */
 }
 
 body {

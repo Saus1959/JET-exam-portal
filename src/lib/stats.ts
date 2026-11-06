@@ -3,8 +3,10 @@ import { Attempt } from "@/models/Attempt";
 import { Exam } from "@/models/Exam";
 import { User } from "@/models/User";
 import type { AttemptDTO, UserDTO } from "@/types";
+import { connection } from "next/server";
 
 export async function getAdminOverview() {
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
   const [exams, users, attempts, passed] = await Promise.all([
     Exam.countDocuments(),
@@ -12,20 +14,28 @@ export async function getAdminOverview() {
     Attempt.countDocuments({ status: "finished" }),
     Attempt.countDocuments({ status: "finished", passed: true }),
   ]);
-  return { exams, users, attempts, passRate: attempts ? Math.round((passed / attempts) * 100) : 0 };
+  return {
+    exams,
+    users,
+    attempts,
+    passRate: attempts ? Math.round((passed / attempts) * 100) : 0,
+  };
 }
 
 export function summarize(attempts: AttemptDTO[]) {
   const finished = attempts.filter((a) => a.status === "finished");
   const passed = finished.filter((a) => a.passed).length;
   const average = finished.length
-    ? Math.round(finished.reduce((sum, a) => sum + a.percent, 0) / finished.length)
+    ? Math.round(
+        finished.reduce((sum, a) => sum + a.percent, 0) / finished.length,
+      )
     : 0;
   const best = finished.reduce((max, a) => Math.max(max, a.percent), 0);
   return { count: finished.length, passed, average, best };
 }
 
 export async function listUsers(): Promise<UserDTO[]> {
+  await connection(); // defer to request time (Mongoose uses new Date() internally)
   await connectDB();
   const docs = await User.find().sort({ createdAt: -1 }).lean();
   return docs.map((u) => ({
