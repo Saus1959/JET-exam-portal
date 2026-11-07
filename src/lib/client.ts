@@ -7,7 +7,7 @@ export interface ApiResult {
 /** Small fetch wrapper for client components. Errors are API error codes. */
 export async function api(
   url: string,
-  method: "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "DELETE",
   body?: unknown,
 ): Promise<ApiResult> {
   try {

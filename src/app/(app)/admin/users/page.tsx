@@ -1,5 +1,6 @@
 import CreateUserForm from "@/components/CreateUserForm";
 import DeleteButton from "@/components/DeleteButton";
+import UserPassword from "@/components/UserPassword";
 import { passPillCls, pillCls, tdCls, thCls } from "@/components/ui";
 import { getDict } from "@/i18n/server";
 import { requireAdmin } from "@/lib/auth";
@@ -17,12 +18,13 @@ export default async function AdminUsersPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="overflow-x-auto rounded-2xl ring-1 ring-slate-200">
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[900px]">
             <thead className="bg-slate-50">
               <tr>
                 <th className={thCls}>{t.common.name}</th>
                 <th className={thCls}>{t.common.email}</th>
                 <th className={thCls}>{t.common.role}</th>
+                <th className={thCls}>{t.adminUsers.passwordCol}</th>
                 <th className={thCls}>{t.adminUsers.created}</th>
                 <th className={thCls} />
               </tr>
@@ -34,6 +36,9 @@ export default async function AdminUsersPage() {
                   <td className={`${tdCls} text-slate-600`}>{u.email}</td>
                   <td className={tdCls}>
                     <span className={u.role === "admin" ? passPillCls : pillCls}>{t.roles[u.role]}</span>
+                  </td>
+                  <td className={tdCls}>
+                    <UserPassword userId={u.id} role={u.role} hasPassword={u.hasPassword} />
                   </td>
                   <td className={`${tdCls} text-slate-500`}>{formatDate(u.createdAt, locale)}</td>
                   <td className={`${tdCls} text-right`}>

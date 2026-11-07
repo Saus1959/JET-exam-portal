@@ -21,7 +21,7 @@ export default async function AdminDashboard() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-extrabold">{t.admin.latest}</h2>
-        <AttemptsTable attempts={latest} locale={locale} t={t} showUser />
+        <AttemptsTable attempts={latest} locale={locale} t={t} showUser canDelete />
       </section>
     </div>
   );

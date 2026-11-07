@@ -6,6 +6,7 @@
  */
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
+import { encryptPassword } from "../src/lib/password-crypto";
 import { SAMPLE_EXAM, STUDENTS, toEmail } from "../src/lib/seed-data";
 import { Exam } from "../src/models/Exam";
 import { User } from "../src/models/User";
@@ -41,10 +42,17 @@ async function main() {
   for (const name of STUDENTS) {
     const email = toEmail(name);
     if (await User.exists({ email })) {
-      console.log(`= student ${email} (already exists)`);
+      // Backfill the admin-visible password if the student still uses the seed password.
+      const existing = await User.findOne({ email });
+      if (existing && !existing.passwordEnc && (await bcrypt.compare(studentPassword, existing.passwordHash))) {
+        await User.updateOne({ _id: existing._id }, { $set: { passwordEnc: encryptPassword(studentPassword) } });
+        console.log(`~ student ${email} (password stored for admin view)`);
+      } else {
+        console.log(`= student ${email} (already exists)`);
+      }
       continue;
     }
-    await User.create({ name, email, passwordHash, role: "user" });
+    await User.create({ name, email, passwordHash, passwordEnc: encryptPassword(studentPassword), role: "user" });
     console.log(`+ student ${email}  (${name})`);
   }
 

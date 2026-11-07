@@ -139,6 +139,14 @@ export const en = {
     password: "Password (min. 6 characters)",
     you: "you",
     created: "Created",
+    passwordCol: "Password",
+    show: "Show",
+    hide: "Hide",
+    copy: "Copy",
+    copied: "Copied",
+    changePassword: "Change",
+    newPassword: "New password (min. 6)",
+    passwordUnknown: "Unknown yet: set a new password or it will appear after the student's next login.",
   },
   errors: {
     generic: "Something went wrong. Please try again.",
@@ -150,6 +158,7 @@ export const en = {
     not_found: "Not found.",
     exam_unavailable: "This exam is not available.",
     cannot_delete_self: "You cannot delete your own account.",
+    password_unknown: "The password is not stored for this account. Set a new one.",
     network: "No connection to the server.",
   },
 };

@@ -139,6 +139,14 @@ export const az: Dict = {
     password: "Parol (minimum 6 simvol)",
     you: "siz",
     created: "Yaradılıb",
+    passwordCol: "Parol",
+    show: "Göstər",
+    hide: "Gizlət",
+    copy: "Kopyala",
+    copied: "Kopyalandı",
+    changePassword: "Dəyiş",
+    newPassword: "Yeni parol (min. 6)",
+    passwordUnknown: "Hələ məlum deyil: yeni parol təyin edin və ya tələbə növbəti dəfə daxil olduqda görünəcək.",
   },
   errors: {
     generic: "Xəta baş verdi. Yenidən cəhd edin.",
@@ -150,6 +158,7 @@ export const az: Dict = {
     not_found: "Tapılmadı.",
     exam_unavailable: "Bu imtahan əlçatan deyil.",
     cannot_delete_self: "Öz hesabınızı silə bilməzsiniz.",
+    password_unknown: "Bu hesab üçün parol saxlanmayıb. Yeni parol təyin edin.",
     network: "Serverlə əlaqə yoxdur.",
   },
 };

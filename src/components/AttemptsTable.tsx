@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DeleteButton from "@/components/DeleteButton";
 import { failPillCls, passPillCls, tdCls, thCls } from "@/components/ui";
 import { pick, type Dict } from "@/i18n";
 import { formatDate } from "@/lib/utils";
@@ -9,9 +10,11 @@ interface Props {
   locale: Locale;
   t: Dict;
   showUser?: boolean;
+  /** Admin only: show a delete button for finished attempts. */
+  canDelete?: boolean;
 }
 
-export default function AttemptsTable({ attempts, locale, t, showUser = false }: Props) {
+export default function AttemptsTable({ attempts, locale, t, showUser = false, canDelete = false }: Props) {
   if (attempts.length === 0) {
     return <p className="rounded-2xl bg-slate-50 p-6 text-center text-slate-500">{t.common.empty}</p>;
   }
@@ -48,9 +51,12 @@ export default function AttemptsTable({ attempts, locale, t, showUser = false }:
               </td>
               <td className={`${tdCls} text-slate-500`}>{formatDate(a.finishedAt ?? a.startedAt, locale)}</td>
               <td className={`${tdCls} text-right`}>
-                <Link href={`/attempts/${a.id}`} className="font-bold text-brand hover:underline">
-                  {t.common.view}
-                </Link>
+                <div className="flex items-center justify-end gap-4">
+                  <Link href={`/attempts/${a.id}`} className="font-bold text-brand hover:underline">
+                    {t.common.view}
+                  </Link>
+                  {canDelete && a.status === "finished" && <DeleteButton url={`/api/attempts/${a.id}`} />}
+                </div>
               </td>
             </tr>
           ))}

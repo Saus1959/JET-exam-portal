@@ -9,7 +9,7 @@ export default async function AdminResultsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-black md:text-4xl">{t.nav.results}</h1>
-      <AttemptsTable attempts={attempts} locale={locale} t={t} showUser />
+      <AttemptsTable attempts={attempts} locale={locale} t={t} showUser canDelete />
     </div>
   );
 }

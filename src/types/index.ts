@@ -52,5 +52,7 @@ export interface UserDTO {
   name: string;
   email: string;
   role: Role;
+  /** True when the admin can reveal this student's password. */
+  hasPassword: boolean;
   createdAt: string;
 }

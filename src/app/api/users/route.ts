@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { guard, jsonError } from "@/lib/api";
 import { connectDB } from "@/lib/mongodb";
+import { encryptPassword } from "@/lib/password-crypto";
 import { User } from "@/models/User";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
   if (await User.exists({ email })) return jsonError("email_taken", 409);
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await User.create({ name, email, passwordHash, role });
+  const passwordEnc = role === "user" ? encryptPassword(password) : undefined;
+  await User.create({ name, email, passwordHash, passwordEnc, role });
   return NextResponse.json({ ok: true }, { status: 201 });
 }
