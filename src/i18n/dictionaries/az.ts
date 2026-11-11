@@ -1,7 +1,7 @@
 import type { Dict } from "./en";
 
 export const az: Dict = {
-  appName: "ExamHub",
+  appName: "Exam",
   common: {
     save: "Yadda saxla",
     cancel: "Ləğv et",
@@ -10,7 +10,8 @@ export const az: Dict = {
     create: "Yarat",
     back: "Geri",
     loading: "Gözləyin...",
-    confirmDelete: "Silmək istədiyinizə əminsiniz? Bu əməliyyatı geri qaytarmaq olmaz.",
+    confirmDelete:
+      "Silmək istədiyinizə əminsiniz? Bu əməliyyatı geri qaytarmaq olmaz.",
     actions: "Əməliyyatlar",
     date: "Tarix",
     name: "Ad",
@@ -131,6 +132,26 @@ export const az: Dict = {
     correct: "Düzgün cavab",
     hint: "Ən azı bir dili doldurun. Digəri boşdursa, doldurulmuş dil göstəriləcək.",
     questionN: "Sual {n}",
+    donwloadTemplate: ".xlsx faylinin şablonunu yüklə",
+    import: "İmport",
+    importFailed: "Fayl import edilmədi:",
+    importErrors: {
+      file_type: "Yalnız .xlsx faylları dəstəklənir.",
+      file_size: "Fayl çox böyükdür (maks. 2 MB).",
+      read_failed: "Faylı oxumaq mümkün olmadı. Düzgün .xlsx faylıdır?",
+      no_sheet: "Faylda vərəq yoxdur.",
+      bad_header:
+        "Cədvəlin formatı yanlışdır. Şablonu yükləyin və başlıq sətrini dəyişməyin.",
+      empty: "Faylda sual yoxdur.",
+      too_many: "Sualların sayı çoxdur (bir imtahanda maks. 200).",
+      az_required: "{row}-ci sətir: Azərbaycan dilində (AZ) mətn mütləqdir.",
+      too_long:
+        "{row}-ci sətir: mətn çox uzundur (sual 1000, variant 500 simvola qədər).",
+      options_min: "{row}-ci sətir: ən azı 2 variant olmalıdır.",
+      options_gap: "{row}-ci sətir: variantları ardıcıl, boşluqsuz doldurun.",
+      correct_invalid:
+        "{row}-ci sətir: düzgün cavab doldurulmuş variantın nömrəsi olmalıdır.",
+    },
   },
   adminUsers: {
     title: "İstifadəçilər",
@@ -146,7 +167,8 @@ export const az: Dict = {
     copied: "Kopyalandı",
     changePassword: "Dəyiş",
     newPassword: "Yeni parol (min. 6)",
-    passwordUnknown: "Hələ məlum deyil: yeni parol təyin edin və ya tələbə növbəti dəfə daxil olduqda görünəcək.",
+    passwordUnknown:
+      "Hələ məlum deyil: yeni parol təyin edin və ya tələbə növbəti dəfə daxil olduqda görünəcək.",
   },
   errors: {
     generic: "Xəta baş verdi. Yenidən cəhd edin.",

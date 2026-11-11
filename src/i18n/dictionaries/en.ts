@@ -131,6 +131,26 @@ export const en = {
     correct: "Correct answer",
     hint: "Fill in at least one language. If the other is empty, the filled one is shown.",
     questionN: "Question {n}",
+    donwloadTemplate: "Download template of .xslx file",
+    import: "Import",
+    importFailed: "The file was not imported:",
+    importErrors: {
+      file_type: "Only .xlsx files are supported.",
+      file_size: "The file is too large (max 2 MB).",
+      read_failed: "Could not read the file. Is it a valid .xlsx?",
+      no_sheet: "The file has no sheets.",
+      bad_header:
+        "Wrong table format. Download the template and keep the header row unchanged.",
+      empty: "The file has no questions.",
+      too_many: "Too many questions (max 200 per exam).",
+      az_required: "Row {row}: the Azerbaijani (AZ) text is required.",
+      too_long:
+        "Row {row}: a text is too long (question up to 1000, option up to 500 characters).",
+      options_min: "Row {row}: at least 2 options are required.",
+      options_gap: "Row {row}: fill options one after another, without gaps.",
+      correct_invalid:
+        "Row {row}: the correct answer must be the number of a filled option.",
+    },
   },
   adminUsers: {
     title: "Users",
@@ -146,7 +166,8 @@ export const en = {
     copied: "Copied",
     changePassword: "Change",
     newPassword: "New password (min. 6)",
-    passwordUnknown: "Unknown yet: set a new password or it will appear after the student's next login.",
+    passwordUnknown:
+      "Unknown yet: set a new password or it will appear after the student's next login.",
   },
   errors: {
     generic: "Something went wrong. Please try again.",
@@ -158,7 +179,8 @@ export const en = {
     not_found: "Not found.",
     exam_unavailable: "This exam is not available.",
     cannot_delete_self: "You cannot delete your own account.",
-    password_unknown: "The password is not stored for this account. Set a new one.",
+    password_unknown:
+      "The password is not stored for this account. Set a new one.",
     network: "No connection to the server.",
   },
 };

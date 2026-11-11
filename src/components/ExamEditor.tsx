@@ -2,11 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
-import { btnDanger, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/ui";
+import {
+  btnDanger,
+  btnGhost,
+  btnPrimary,
+  cardCls,
+  inputCls,
+} from "@/components/ui";
 import { errorText, fmt } from "@/i18n";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client";
 import type { ExamInput, Localized, QuestionInput } from "@/types";
+import { parseExamFile } from "@/lib/examImport";
+import ImportButton from "./ui/importBtn";
 
 const emptyL = (): Localized => ({ en: "", az: "" });
 const emptyQuestion = (): QuestionInput => ({
@@ -14,6 +22,8 @@ const emptyQuestion = (): QuestionInput => ({
   options: [emptyL(), emptyL()],
   correctIndex: 0,
 });
+const isBlankQuestion = (q: QuestionInput) =>
+  !q.text.en && !q.text.az && q.options.every((o) => !o.en && !o.az);
 const blankExam = (): ExamInput => ({
   title: emptyL(),
   description: emptyL(),
@@ -45,49 +55,120 @@ function LField({
           onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
             onChange({ ...value, [l]: e.target.value }),
         };
-        return multiline ? <textarea key={l} rows={2} {...common} /> : <input key={l} {...common} />;
+        return multiline ? (
+          <textarea key={l} rows={2} {...common} />
+        ) : (
+          <input key={l} {...common} />
+        );
       })}
     </div>
   );
 }
 
-export default function ExamEditor({ examId, initial }: { examId?: string; initial?: ExamInput }) {
+export default function ExamEditor({
+  examId,
+  initial,
+}: {
+  examId?: string;
+  initial?: ExamInput;
+}) {
   const { t } = useI18n();
   const router = useRouter();
   const [form, setForm] = useState<ExamInput>(initial ?? blankExam());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importing, setImporting] = useState(false);
 
   const patchQuestion = (qi: number, fn: (q: QuestionInput) => QuestionInput) =>
-    setForm((f) => ({ ...f, questions: f.questions.map((q, i) => (i === qi ? fn(q) : q)) }));
+    setForm((f) => ({
+      ...f,
+      questions: f.questions.map((q, i) => (i === qi ? fn(q) : q)),
+    }));
 
   const removeOption = (qi: number, oi: number) =>
     patchQuestion(qi, (q) => ({
       ...q,
       options: q.options.filter((_, i) => i !== oi),
-      correctIndex: q.correctIndex === oi ? 0 : q.correctIndex > oi ? q.correctIndex - 1 : q.correctIndex,
+      correctIndex:
+        q.correctIndex === oi
+          ? 0
+          : q.correctIndex > oi
+            ? q.correctIndex - 1
+            : q.correctIndex,
     }));
 
-  async function save() {
-    setBusy(true);
-    setError(null);
-    const res = examId
-      ? await api(`/api/exams/${examId}`, "PUT", form)
-      : await api("/api/exams", "POST", form);
-    setBusy(false);
+  async function handleImport(file: File) {
+    setImporting(true);
+    setImportErrors([]);
+    const res = await parseExamFile(file);
+    setImporting(false);
+
     if (!res.ok) {
-      setError(errorText(t, res.error));
+      setImportErrors(
+        res.errors
+          .slice(0, 10) // не засоряем экран сотнями ошибок
+          .map((e) => fmt(t.editor.importErrors[e.code], { row: e.row ?? "" })),
+      );
       return;
     }
-    router.push("/admin/exams");
-    router.refresh();
+
+    // пустую стартовую карточку заменяем, иначе дописываем в конец
+    const base =
+      form.questions.length === 1 && isBlankQuestion(form.questions[0])
+        ? []
+        : form.questions;
+    if (base.length + res.questions.length > 200) {
+      setImportErrors([t.editor.importErrors.too_many]);
+      return;
+    }
+    setForm({ ...form, questions: [...base, ...res.questions] });
+  }
+
+  async function save() {
+    // 1. Простейшая валидация на клиенте перед отправкой
+    if (!form.title.az.trim() && !form.title.en.trim()) {
+      setError("İmtahanin adini qeyd edin(hec olmasa her hansi bir dilde:D) ");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      console.log("Data gonderilir (payload):", form);
+
+      const endpoint = examId ? `/api/exams/${examId}` : "/api/exams";
+      const method = examId ? "PUT" : "POST";
+
+      const res = await api(endpoint, method, form);
+      console.log("Serverin cavabi:", res);
+
+      if (!res.ok) {
+        setError(errorText(t, res.error));
+        return;
+      }
+
+      // Успешно сохранено — перенаправляем
+      router.push("/admin/exams");
+      router.refresh();
+    } catch (err) {
+      console.error("Save error:", err);
+      setError("Network error");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div className="space-y-6">
       <section className={`${cardCls} space-y-4`}>
         <p className="text-sm text-slate-500">{t.editor.hint}</p>
-        <LField label={t.editor.examTitle} value={form.title} onChange={(title) => setForm({ ...form, title })} />
+        <LField
+          label={t.editor.examTitle}
+          value={form.title}
+          onChange={(title) => setForm({ ...form, title })}
+        />
         <LField
           label={t.editor.description}
           value={form.description}
@@ -103,18 +184,24 @@ export default function ExamEditor({ examId, initial }: { examId?: string; initi
               min={1}
               max={600}
               value={form.durationMinutes}
-              onChange={(e) => setForm({ ...form, durationMinutes: Number(e.target.value) })}
+              onChange={(e) =>
+                setForm({ ...form, durationMinutes: Number(e.target.value) })
+              }
               className={inputCls}
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-sm text-slate-600">{t.editor.passingScore}</span>
+            <span className="text-sm text-slate-600">
+              {t.editor.passingScore}
+            </span>
             <input
               type="number"
               min={0}
               max={100}
               value={form.passingScore}
-              onChange={(e) => setForm({ ...form, passingScore: Number(e.target.value) })}
+              onChange={(e) =>
+                setForm({ ...form, passingScore: Number(e.target.value) })
+              }
               className={inputCls}
             />
           </label>
@@ -131,17 +218,51 @@ export default function ExamEditor({ examId, initial }: { examId?: string; initi
         </label>
       </section>
 
-      <h2 className="text-xl font-extrabold">{t.editor.questions}</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-extrabold">{t.editor.questions}</h2>
+        <div className="flex justify-center items-center gap-4">
+          <ImportButton
+            onFile={handleImport}
+            disabled={importing}
+            label={importing ? t.common.loading : t.editor.import}
+          />
+          <a
+            href="/exam_import_template.xlsx"
+            download="exam_import_template.xlsx"
+            className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            <span>{t.editor.donwloadTemplate}</span>
+          </a>
+        </div>
+      </div>
+
+      {importErrors.length > 0 && (
+        <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p className="font-semibold">{t.editor.importFailed}</p>
+          <ul className="list-disc pl-5">
+            {importErrors.map((m, i) => (
+              <li key={i}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {form.questions.map((q, qi) => (
         <section key={qi} className={`${cardCls} space-y-4`}>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="font-extrabold">{fmt(t.editor.questionN, { n: qi + 1 })}</h3>
+            <h3 className="font-extrabold">
+              {fmt(t.editor.questionN, { n: qi + 1 })}
+            </h3>
             {form.questions.length > 1 && (
               <button
                 type="button"
                 className={btnDanger}
-                onClick={() => setForm({ ...form, questions: form.questions.filter((_, i) => i !== qi) })}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    questions: form.questions.filter((_, i) => i !== qi),
+                  })
+                }
               >
                 {t.editor.removeQuestion}
               </button>
@@ -156,14 +277,18 @@ export default function ExamEditor({ examId, initial }: { examId?: string; initi
           />
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-600">{t.editor.correct}</p>
+            <p className="text-sm font-semibold text-slate-600">
+              {t.editor.correct}
+            </p>
             {q.options.map((opt, oi) => (
               <div key={oi} className="flex items-start gap-3">
                 <input
                   type="radio"
                   name={`correct-${qi}`}
                   checked={q.correctIndex === oi}
-                  onChange={() => patchQuestion(qi, (old) => ({ ...old, correctIndex: oi }))}
+                  onChange={() =>
+                    patchQuestion(qi, (old) => ({ ...old, correctIndex: oi }))
+                  }
                   aria-label={`${t.editor.correct}: ${fmt(t.editor.option, { n: oi + 1 })}`}
                   className="mt-4 size-5 shrink-0 accent-emerald-400"
                 />
@@ -196,7 +321,12 @@ export default function ExamEditor({ examId, initial }: { examId?: string; initi
               <button
                 type="button"
                 className={btnGhost}
-                onClick={() => patchQuestion(qi, (old) => ({ ...old, options: [...old.options, emptyL()] }))}
+                onClick={() =>
+                  patchQuestion(qi, (old) => ({
+                    ...old,
+                    options: [...old.options, emptyL()],
+                  }))
+                }
               >
                 + {t.editor.addOption}
               </button>
@@ -208,18 +338,33 @@ export default function ExamEditor({ examId, initial }: { examId?: string; initi
       <button
         type="button"
         className={btnGhost}
-        onClick={() => setForm({ ...form, questions: [...form.questions, emptyQuestion()] })}
+        onClick={() =>
+          setForm({ ...form, questions: [...form.questions, emptyQuestion()] })
+        }
       >
         + {t.editor.addQuestion}
       </button>
 
-      {error && <p className="rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600">
+          {error}
+        </p>
+      )}
 
       <div className="flex gap-3">
-        <button type="button" onClick={save} disabled={busy} className={btnPrimary}>
+        <button
+          type="button"
+          onClick={save}
+          disabled={busy}
+          className={btnPrimary}
+        >
           {busy ? t.common.loading : t.common.save}
         </button>
-        <button type="button" onClick={() => router.push("/admin/exams")} className={btnGhost}>
+        <button
+          type="button"
+          onClick={() => router.push("/admin/exams")}
+          className={btnGhost}
+        >
           {t.common.cancel}
         </button>
       </div>

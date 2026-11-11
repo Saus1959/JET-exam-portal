@@ -16,11 +16,6 @@ export const metadata: Metadata = {
   description: "Online exams / Onlayn imtahanlar",
 };
 
-/**
- * Everything that depends on the request (language cookie, session, database) lives inside
- * this Suspense boundary. The root layout itself is static, so the app works both with and
- * without `cacheComponents` in next.config.ts.
- */
 async function RequestShell({ children }: { children: ReactNode }) {
   const { locale, t } = await getDict();
   return (
